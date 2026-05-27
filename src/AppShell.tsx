@@ -1,13 +1,14 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import type { SxProps, Theme } from '@mui/material/styles';
-import { useTheme } from '@mui/material/styles';
-import LoggedInHeader from './LoggedInHeader';
-import type { LoggedInHeaderProfileType } from './LoggedInHeader';
-import SideNav from './SideNav';
-import type { AccountType, SideNavProps } from './SideNav';
-import ReleaseNotesModal from './ReleaseNotesModal';
+import React, { useState } from "react";
+import type { SxProps, Theme } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import LoggedInHeader from "./LoggedInHeader";
+import type { LoggedInHeaderProfileType } from "./LoggedInHeader";
+import SideNav from "./SideNav";
+import type { AccountType, SideNavProps } from "./SideNav";
+import ReleaseNotesModal from "./ReleaseNotesModal";
 import {
   AppDrawer,
   BodyInner,
@@ -16,7 +17,7 @@ import {
   HeaderWrapper,
   ShellRoot,
   SideNavDesktop,
-} from './AppShell.styles';
+} from "./AppShell.styles";
 
 export interface AppShellProps {
   /** Profile type passed to the logged-in header. */
@@ -30,7 +31,7 @@ export interface AppShellProps {
   /** Disables the Schedule Closing button in the header. */
   disableScheduleClosing?: boolean;
   /** Props spread onto SideNav. AppShell owns the SideNav sx. */
-  sidenavProps: Omit<SideNavProps, 'sx'>;
+  sidenavProps: Omit<SideNavProps, "sx">;
   /** Main content container overrides. */
   contentSx?: SxProps<Theme>;
   /** Body row overrides for outer padding and gap. */
@@ -44,17 +45,17 @@ function toHeaderProfileType(
 ): LoggedInHeaderProfileType | undefined {
   if (!accountType) return undefined;
   if (
-    accountType === 'law-firm' ||
-    accountType === 'title-search' ||
-    accountType === 'title-insurance' ||
-    accountType === 'notary' ||
-    accountType === 'corporate' ||
-    accountType === 'super-admin'
+    accountType === "law-firm" ||
+    accountType === "title-search" ||
+    accountType === "title-insurance" ||
+    accountType === "notary" ||
+    accountType === "corporate" ||
+    accountType === "super-admin"
   ) {
     return accountType;
   }
-  if (accountType === 'customer') return 'individual';
-  return 'individual';
+  if (accountType === "customer") return "individual";
+  return "individual";
 }
 
 export default function AppShell({
@@ -69,6 +70,10 @@ export default function AppShell({
   children,
 }: AppShellProps) {
   const theme = useTheme();
+  // Match the lg breakpoint used by SideNavDesktop/AppDrawer in AppShell.styles.ts.
+  // Below lg, AppShell renders the AppDrawer (hamburger-driven) instead of the
+  // desktop side nav, so the header must show its mobile row (with hamburger).
+  const isBelowDesktop = useMediaQuery(theme.breakpoints.down("lg"));
   const [sidenavExpanded, setSidenavExpanded] = useState(
     sidenavProps.expanded ?? true,
   );
@@ -78,7 +83,7 @@ export default function AppShell({
   const resolvedHeaderProfileType =
     headerProfileType ||
     toHeaderProfileType(sidenavProps.accountType) ||
-    'law-firm';
+    "law-firm";
 
   return (
     <ShellRoot>
@@ -90,6 +95,7 @@ export default function AppShell({
           userEmail={headerUserEmail}
           onMenuClick={() => setDrawerOpen(true)}
           disableScheduleClosing={disableScheduleClosing}
+          breakpoint={isBelowDesktop ? "mobile" : "desktop"}
         />
       </HeaderWrapper>
 
@@ -104,7 +110,7 @@ export default function AppShell({
               sx={{
                 borderRadius: theme.customBorderRadius.xl,
                 border: `1px solid ${theme.semantic.divider}`,
-                boxShadow: 'var(--sc-panel-shadow)',
+                boxShadow: "var(--sc-panel-shadow)",
               }}
             />
           </SideNavDesktop>
@@ -132,7 +138,7 @@ export default function AppShell({
             setDrawerOpen(false);
           }}
           onVersionClick={() => setReleaseNotesOpen(true)}
-          sx={{ height: '100%', width: '100%' }}
+          sx={{ height: "100%", width: "100%" }}
         />
       </AppDrawer>
 
