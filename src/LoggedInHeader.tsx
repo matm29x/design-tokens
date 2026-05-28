@@ -600,12 +600,11 @@ export default function LoggedInHeader({
                   <MenuIcon size={24} color={theme.semantic.text.primary} />
                 </LIHamburgerBtn>
               )}
+              <Box component="a" href={homeHref} sx={logoLinkStyles}>
+                <Box component="img" src={symbolLogoSrc} alt={logoAlt} sx={symbolLogoStyles} />
+              </Box>
               {profileConfig && <ViewingModeBadge config={profileConfig} href={viewingModeHref} />}
             </LIMobileLeftCol>
-
-            <Box component="a" href={homeHref} sx={logoLinkStyles}>
-              <Box component="img" src={symbolLogoSrc} alt={logoAlt} sx={symbolLogoStyles} />
-            </Box>
 
             <LIMobileRightCol>
               {!hideActions && !hideNotifications && (
