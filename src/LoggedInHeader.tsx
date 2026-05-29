@@ -607,10 +607,32 @@ export default function LoggedInHeader({
             </LIMobileLeftCol>
 
             <LIMobileRightCol>
-              {!hideActions && !hideNotifications && (
-                <LIMobileNotificationsBtn aria-label="Notifications" onClick={onNotificationsClick}>
-                  <NotificationIcon size={24} color={theme.semantic.text.secondary} />
-                </LIMobileNotificationsBtn>
+              {!hideActions && (
+                <>
+                  <LISendInviteIconBtn
+                    aria-label="Send invite"
+                    onClick={onSendInviteClick}
+                  >
+                    <EmailInviteIcon color={theme.semantic.secondary.main} />
+                  </LISendInviteIconBtn>
+                  <LIScheduleClosingIconBtn
+                    aria-label="Schedule closing"
+                    disabled={disableScheduleClosing}
+                    onClick={onScheduleClosingClick}
+                  >
+                    <AddIcon color={theme.semantic.primary.contrastText} />
+                  </LIScheduleClosingIconBtn>
+                  {!hideResources && (
+                    <LIResourcesIconBtn aria-label="Resources" onClick={onResourcesClick}>
+                      <DocumentViewIcon color={theme.semantic.text.secondary} />
+                    </LIResourcesIconBtn>
+                  )}
+                  {!hideNotifications && (
+                    <LIMobileNotificationsBtn aria-label="Notifications" onClick={onNotificationsClick}>
+                      <NotificationIcon size={24} color={theme.semantic.text.secondary} />
+                    </LIMobileNotificationsBtn>
+                  )}
+                </>
               )}
               <LIProfileButton
                 component="button"
