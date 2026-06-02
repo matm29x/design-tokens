@@ -1712,10 +1712,11 @@ export default function DataTable<T = Record<string, unknown>>({
   // fills its wrapper.
   const flexColId = useMemo(() => {
     if (orderedCols.length === 0) return null;
-    const firstFlex = orderedCols.find((c) => (colWidths[c.id] ?? c.width) == null);
-    if (firstFlex) return firstFlex.id;
+    // SCA-2140: the LAST visible column is always the fill column — not the
+    // first auto-width column — so a table whose trailing column has no
+    // explicit width still absorbs the remaining space (no right-side gap).
     return orderedCols[orderedCols.length - 1].id;
-  }, [orderedCols, colWidths]);
+  }, [orderedCols]);
 
   //  Handlers 
   const handleSort = useCallback(
@@ -2649,7 +2650,10 @@ export default function DataTable<T = Record<string, unknown>>({
                               // auto` would hold the column at the content's
                               // natural width and the resize would look
                               // broken even though colWidths is updating.
-                              maxWidth: colWidths[col.id] ?? col.width ?? undefined,
+                              // SCA-2140: the fill column must leave maxWidth
+                              // unset so its `<col width: 100%>` can absorb the
+                              // remaining table width.
+                              maxWidth: col.id === flexColId ? undefined : colWidths[col.id] ?? col.width ?? undefined,
                               backgroundColor: isSelected
                                 ? T.rowSelected
                                 : rowIdx % 2 === 1
