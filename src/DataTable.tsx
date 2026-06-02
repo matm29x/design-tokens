@@ -163,8 +163,14 @@ export interface DataTableProps<T = Record<string, unknown>> {
   hideToolbar?: boolean;
   showSearch?: boolean;
   showColumnVisibility?: boolean;
-  /** Position of the `actionCell` column. Defaults to 'right'. Users can still toggle via the toolbar's actions-position select (unless `hideToolbar`). */
+  /** Position of the `actionCell` column. Defaults to 'right'. */
   actionsColumnPosition?: 'left' | 'right';
+  /**
+   * Show the toolbar's actions-column-position select (Left/Right). Defaults
+   * to `false` — the Actions column is right by default and most apps don't
+   * need to expose repositioning. Set `true` to surface the control.
+   */
+  showActionsPositionControl?: boolean;
   /**
    * Inline-add layout variant. Controls where the "Add" trigger and any
    * pending draft rows live:
@@ -1397,6 +1403,7 @@ export default function DataTable<T = Record<string, unknown>>({
   showSearch,
   showColumnVisibility = true,
   actionsColumnPosition = 'right',
+  showActionsPositionControl = false,
   inlineAddVariant = 'footer',
   inlineAddRow,
   onAddClick,
@@ -1948,7 +1955,7 @@ export default function DataTable<T = Record<string, unknown>>({
             />
           )}
           <ToolbarSpacer />
-          {showActionsColumn && (
+          {showActionsColumn && showActionsPositionControl && (
             <SelectField
               variant="outline"
               placeholder="Actions"

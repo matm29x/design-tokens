@@ -108,18 +108,15 @@ export const ScrollShadow = styled(Box, {
     : 'linear-gradient(to left, rgba(0,0,0,0.07), transparent)',
 }));
 
-export const ScrollContainerInner = styled(Box)(({ theme }) => ({
+export const ScrollContainerInner = styled(Box)(() => ({
   overflowX: 'auto',
   overflowY: 'visible',
-  scrollbarWidth: 'thin',
-  scrollbarColor: `${theme.colors.slate[300]} transparent`,
-  '&::-webkit-scrollbar': { height: 6, width: 6 },
-  '&::-webkit-scrollbar-track': { background: 'transparent' },
-  '&::-webkit-scrollbar-thumb': {
-    background: theme.colors.slate[300],
-    borderRadius: theme.customBorderRadius.full,
-    '&:hover': { background: theme.colors.slate[400] },
-  },
+  // Query container so the empty state can size to the scroll *viewport* width
+  // (100cqw) instead of growing with the full table (all-columns) width.
+  containerType: 'inline-size',
+  // Scrollbar styling reverted to browser defaults — no custom width / color /
+  // track-thumb overrides — so the native UA scrollbar shows at its standard
+  // platform size (matching the rest of the app's scrollbars).
   // Elevate the focused body cell above its neighbors so in-cell control
   // focus halos / open-state box-shadows paint over adjacent cell
   // backgrounds instead of being covered by them. Every <td> has its own
@@ -147,6 +144,14 @@ export const EmptyStateContainer = styled(Box)(({ theme }) => ({
   paddingLeft: theme.customSpacing[4],
   paddingRight: theme.customSpacing[4],
   backgroundColor: 'var(--sc-dt-empty-bg)',
+  // Track the scroll viewport width (ScrollContainerInner sets
+  // container-type: inline-size) and pin to its left edge, so the empty state
+  // stays within view instead of stretching across the full table width when
+  // many columns push the table wider than the viewport.
+  position: 'sticky',
+  left: 0,
+  width: '100cqw',
+  boxSizing: 'border-box',
 }));
 
 export const EmptyStateIconCircle = styled(Box)(({ theme }) => ({
