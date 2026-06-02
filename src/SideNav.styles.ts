@@ -73,7 +73,13 @@ export const NavItemLabel = styled(Typography, {
   lineHeight: 1,
   color: isActive ? theme.semantic.primary.main : theme.semantic.text.primary,
   flex: 1,
+  minWidth: 0,
   textAlign: 'left',
+  // Single-line truncation: long labels like "Standard Operating Procedures"
+  // should ellipsize rather than wrap so every nav row stays the same height.
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 }));
 
 // ── Collapsed nav item ─────────────────────────────────────────
