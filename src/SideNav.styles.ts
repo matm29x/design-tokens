@@ -515,6 +515,32 @@ export const CollapsedBadgePosition = styled(Box)({
 
 // ── Content panels (expanded / collapsed) ─────────────────────
 
+// Internal scroll for the nav panels. With the AppShell hug, SideNavRoot is
+// capped at `maxHeight: 100%`; when its content exceeds that, the panel
+// (top section + nav list + footer) scrolls together inside the root. Hover-
+// only thin scrollbar; the gutter is pulled to the SideNav's right edge via
+// the negative margin / matching padding.
+const hoverScrollStyles = {
+  overflowY: 'auto' as const,
+  overflowX: 'hidden' as const,
+  marginRight: -20,
+  paddingRight: 20,
+  // Must resolve to `auto` so the webkit pseudo below controls width/color.
+  '&&': { scrollbarColor: 'auto' },
+  '&::-webkit-scrollbar': { width: 8, height: 8 },
+  '&::-webkit-scrollbar-button': { display: 'none', width: 0, height: 0 },
+  '&::-webkit-scrollbar-track': { backgroundColor: 'transparent' },
+  '&::-webkit-scrollbar-thumb': {
+    backgroundColor: 'transparent',
+    borderRadius: 4,
+    transition: 'background-color 200ms ease',
+  },
+  '&:hover::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0, 0, 0, 0.35)' },
+  '[data-color-mode="dark"] &:hover::-webkit-scrollbar-thumb': {
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+  },
+};
+
 export const SideNavExpandedPanel = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'isAnimating',
 })<{ isAnimating?: boolean }>(({ theme, isAnimating }) => ({
@@ -522,12 +548,15 @@ export const SideNavExpandedPanel = styled(Box, {
   flexDirection: 'column',
   gap: theme.customSpacing[4],
   alignItems: 'center',
-  width: 320 - 48,    // EXPANDED_WIDTH - padding
-  minWidth: 320 - 48,
+  // Stretch to the root width (was a fixed EXPANDED_WIDTH - padding) so the
+  // negative-margin scrollbar gutter reaches the SideNav's right edge.
+  alignSelf: 'stretch',
+  width: 'auto',
   flex: 1,
   minHeight: 0,
   opacity: isAnimating ? 0 : 1,
   transition: 'opacity 0.2s ease',
+  ...hoverScrollStyles,
 }));
 
 export const SideNavCollapsedPanel = styled(Box, {
@@ -537,30 +566,32 @@ export const SideNavCollapsedPanel = styled(Box, {
   flexDirection: 'column',
   gap: theme.customSpacing[4],
   alignItems: 'center',
-  width: 96 - 48,     // COLLAPSED_WIDTH - padding
-  minWidth: 96 - 48,
+  alignSelf: 'stretch',
+  width: 'auto',
   flex: 1,
   minHeight: 0,
   opacity: isAnimating ? 0 : 1,
   transition: 'opacity 0.2s ease',
+  ...hoverScrollStyles,
 }));
 
+// Nav list is plain flow content inside the scrolling panel — no flex grow
+// (which would absorb remaining space and leave an empty gap below the last
+// item) and no overflow of its own; the whole panel scrolls when capped.
 export const SideNavNavList = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: theme.customSpacing[1],
-  flex: 1,
   width: '100%',
-  minHeight: 0,
+  flexShrink: 0,
 }));
 
 export const SideNavCollapsedNavList = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: theme.customSpacing[1],
-  flex: 1,
   alignItems: 'center',
-  minHeight: 0,
+  flexShrink: 0,
 }));
 
 export const SideNavTopSection = styled(Box)(({ theme }) => ({
