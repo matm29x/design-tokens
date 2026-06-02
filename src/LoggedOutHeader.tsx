@@ -3,11 +3,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import { useTheme } from '@mui/material/styles';
 import BaseButton from './BaseButton';
 import { useColorMode } from './ColorModeContext';
-import { CloseIcon } from './icons';
+import { CloseIcon, MenuIcon } from './icons';
 import {
   LOAppBar,
   LOContainer,
@@ -169,7 +168,7 @@ export default function LoggedOutHeader({
                 sx={{ display: showHamburger ?? { xs: 'flex', lg: 'none' } }}
                 aria-label="Open navigation menu"
               >
-                <MenuRoundedIcon sx={{ fontSize: 24 }} />
+                <MenuIcon size={24} color="currentColor" />
               </LOHamburgerButton>
             </LORightBox>
           </LOToolbar>
