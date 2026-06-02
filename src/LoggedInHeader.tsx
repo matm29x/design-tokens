@@ -10,14 +10,19 @@ import { useColorMode } from './ColorModeContext';
 import ImagePlaceholder from './ImagePlaceholder';
 import Toggle from './Toggle';
 import {
+  AccessibilityAltIcon,
   AddIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   CloseIcon,
-  DocumentViewIcon,
+  DocumentMultipleIcon,
+  EmailInviteIcon,
   EventScheduleIcon,
-  MoonFilledIcon,
-  SettingsAdjustIcon,
+  LogoutIcon,
+  MenuIcon,
+  MoonOutlineIcon,
+  NotificationIcon,
+  SettingsIcon,
   ViewFilledIcon,
 } from './icons';
 import type { IconProps } from './icons';
@@ -193,53 +198,6 @@ function SvgIcon({ size = 20, color = 'currentColor', children }: IconProps & { 
           : child
       )}
     </svg>
-  );
-}
-
-function EmailInviteIcon(props: IconProps) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M4 6.5H20V17.5H4V6.5Z" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M4.75 7.25L12 12.75L19.25 7.25" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M18 4V9" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M15.5 6.5H20.5" strokeWidth="1.8" strokeLinecap="round" />
-    </SvgIcon>
-  );
-}
-
-function NotificationIcon(props: IconProps) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M18 10.2V14.5L19.5 17H4.5L6 14.5V10.2C6 6.9 8.4 4.5 12 4.5C15.6 4.5 18 6.9 18 10.2Z" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M9.75 19C10.25 20 10.95 20.5 12 20.5C13.05 20.5 13.75 20 14.25 19" strokeWidth="1.8" strokeLinecap="round" />
-    </SvgIcon>
-  );
-}
-
-function MenuIcon(props: IconProps) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M4 7H20M4 12H20M4 17H20" strokeWidth="2" strokeLinecap="round" />
-    </SvgIcon>
-  );
-}
-
-function AccessibilityAltIcon(props: IconProps) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M12 5.5C12.55 5.5 13 5.05 13 4.5C13 3.95 12.55 3.5 12 3.5C11.45 3.5 11 3.95 11 4.5C11 5.05 11.45 5.5 12 5.5Z" fill="currentColor" />
-      <path d="M5 8.5H19M12 8.5V20M8.5 20L12 13L15.5 20" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </SvgIcon>
-  );
-}
-
-function LogoutIcon(props: IconProps) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M10 5H5V19H10" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M13 8L17 12L13 16" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M17 12H9" strokeWidth="1.8" strokeLinecap="round" />
-    </SvgIcon>
   );
 }
 
@@ -420,11 +378,11 @@ export default function LoggedInHeader({
 
   const defaultNavItems = useMemo<LoggedInHeaderNavItem[]>(() => [
     { id: 'dashboard', label: 'Dashboard', icon: <MeterIcon size={20} color={theme.semantic.text.primary} /> },
-    { id: 'documents', label: 'My Documents', icon: <DocumentViewIcon size={20} color={theme.semantic.text.primary} /> },
+    { id: 'documents', label: 'My Documents', icon: <DocumentMultipleIcon size={20} color={theme.semantic.text.primary} /> },
     { id: 'pipeline', label: 'Pipeline', icon: <PipelineIcon size={20} color={theme.semantic.text.primary} /> },
     { id: 'calendar', label: 'Calendar', icon: <EventScheduleIcon size={20} color={theme.semantic.text.primary} /> },
     { id: 'connections', label: 'Connections', icon: <UserMultipleIcon size={20} color={theme.semantic.text.primary} /> },
-    { id: 'settings', label: 'Settings', icon: <SettingsAdjustIcon size={20} color={theme.semantic.text.primary} /> },
+    { id: 'settings', label: 'Settings', icon: <SettingsIcon size={20} color={theme.semantic.text.primary} /> },
   ], [theme]);
   const resolvedNavItems = navItems ?? defaultNavItems;
 
@@ -461,13 +419,13 @@ export default function LoggedInHeader({
   const profileMenu = (
     <>
       <DropdownItem
-        icon={<SettingsAdjustIcon size={20} color={theme.semantic.text.primary} />}
+        icon={<SettingsIcon size={20} color={theme.semantic.text.primary} />}
         label="Settings"
         onClick={() => handleProfileMenuAction(onSettingsClick)}
         disabled={disableSettings}
       />
       <DropdownItem
-        icon={<MoonFilledIcon size={20} color={theme.semantic.text.primary} />}
+        icon={<MoonOutlineIcon size={20} color={theme.semantic.text.primary} />}
         label="Dark Mode"
         trailing={<Toggle checked={darkMode} onChange={toggleColorMode} size="sm" />}
         onClick={toggleColorMode}
@@ -560,7 +518,7 @@ export default function LoggedInHeader({
 
                   {!hideResources && (
                     <LIResourcesIconBtn aria-label="Resources" onClick={onResourcesClick}>
-                      <DocumentViewIcon color={theme.semantic.text.secondary} />
+                      <DocumentMultipleIcon color={theme.semantic.text.secondary} />
                     </LIResourcesIconBtn>
                   )}
                   {!hideNotifications && (
@@ -624,7 +582,7 @@ export default function LoggedInHeader({
                   </LIScheduleClosingIconBtn>
                   {!hideResources && (
                     <LIResourcesIconBtn aria-label="Resources" onClick={onResourcesClick}>
-                      <DocumentViewIcon color={theme.semantic.text.secondary} />
+                      <DocumentMultipleIcon color={theme.semantic.text.secondary} />
                     </LIResourcesIconBtn>
                   )}
                   {!hideNotifications && (
