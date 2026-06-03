@@ -142,7 +142,10 @@ export default function Chip({
       disableHoverListener
       TransitionComponent={Fade}
       TransitionProps={{ timeout: 0 }}
-      componentsProps={{
+      slotProps={{
+        // slotProps, not componentsProps (a silent no-op in MUI v6+).
+        // common.black/white are CSS-var-backed and flip with color mode
+        // (dark bubble in light mode, white bubble in dark mode).
         tooltip: {
           sx: {
             bgcolor: theme.semantic.common.black,
@@ -155,7 +158,12 @@ export default function Chip({
             boxShadow: 'none',
           },
         },
-        arrow: { sx: { color: theme.semantic.common.black, '&::before': { border: 'none', backgroundColor: theme.semantic.common.black } } },
+        arrow: {
+          sx: {
+            color: theme.semantic.common.black,
+            '&::before': { border: 'none', backgroundColor: theme.semantic.common.black },
+          },
+        },
       }}
     >
       {chipContent}

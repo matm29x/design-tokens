@@ -15,7 +15,7 @@
  *                     — Full company section; optional SetupCard; View Staff or ImpersonationBanner; user profile
  */
 
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import SmoothBox from './SmoothBox';
 import ImagePlaceholder from './ImagePlaceholder';
@@ -84,6 +84,7 @@ import {
   CollapsedBadgePosition,
   SideNavExpandedPanel,
   SideNavCollapsedPanel,
+  SideNavScrollThumb,
   SideNavNavList,
   SideNavCollapsedNavList,
   SideNavTopSection,
@@ -408,7 +409,18 @@ function ImpersonationBanner({
 }) {
   const theme = useTheme();
   return (
-    <ImpersonationBannerBox>
+    <ImpersonationBannerBox
+      role="button"
+      tabIndex={0}
+      aria-label="Exit impersonation"
+      onClick={onExitImpersonation}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onExitImpersonation?.();
+        }
+      }}
+    >
       <ImagePlaceholder
         placeholderType="Initials"
         name={adminName}
@@ -752,7 +764,18 @@ function IndividualImpersonationChip({
 }) {
   const theme = useTheme();
   return (
-    <ImpersonationBannerBox>
+    <ImpersonationBannerBox
+      role="button"
+      tabIndex={0}
+      aria-label="Exit impersonation"
+      onClick={onExitImpersonation}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onExitImpersonation?.();
+        }
+      }}
+    >
       <ImagePlaceholder
         placeholderType="Initials"
         name={adminName}
@@ -810,6 +833,138 @@ function SideNavFooter({
       {footerContent}
     </SideNavFooterBox>
   );
+}
+
+// Custom fading overlay scrollbar for the nav panels. The native scrollbar is
+// hidden (see SideNav.styles); this positions/sizes the overlay thumb from the
+// panel's scroll metrics and toggles a `visible` flag the thumb fades on.
+// Reveals on hover + scroll, auto-hides after a short idle, and supports
+// drag-to-scroll. `panelKey` flips on expanded/collapsed swap so the observer
+// re-binds to the freshly-mounted panel.
+function useFadingScrollbar(panelKey: boolean) {
+  const MIN_THUMB = 28;
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const thumbRef = useRef<HTMLDivElement | null>(null);
+  const [visible, setVisible] = useState(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dragRef = useRef<{ startY: number; startScroll: number } | null>(null);
+  const hovering = useRef(false);
+  // Auto-hide 0.35s after the pointer leaves the SideNav.
+  const HIDE_DELAY = 350;
+
+  const clearHide = useCallback(() => {
+    if (hideTimer.current) {
+      clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+  }, []);
+
+  const scheduleHide = useCallback(
+    (delay: number) => {
+      clearHide();
+      hideTimer.current = setTimeout(() => setVisible(false), delay);
+    },
+    [clearHide],
+  );
+
+  const layout = useCallback(() => {
+    const el = scrollRef.current;
+    const thumb = thumbRef.current;
+    if (!el || !thumb) return;
+    const { scrollTop, scrollHeight, clientHeight, offsetTop } = el;
+    const overflow = scrollHeight - clientHeight;
+    if (overflow <= 1) {
+      thumb.style.display = 'none';
+      return;
+    }
+    thumb.style.display = 'block';
+    const thumbH = Math.max(MIN_THUMB, (clientHeight / scrollHeight) * clientHeight);
+    const top = offsetTop + (scrollTop / overflow) * (clientHeight - thumbH);
+    thumb.style.height = `${thumbH}px`;
+    thumb.style.top = `${top}px`;
+  }, []);
+
+  const reveal = useCallback(() => {
+    setVisible(true);
+    clearHide();
+  }, [clearHide]);
+
+  const handleScroll = useCallback(() => {
+    layout();
+    reveal();
+    // While the pointer is over the SideNav, keep the scrollbar visible; it
+    // only auto-hides 0.35s after the pointer leaves (or after a drag ends).
+    if (!dragRef.current && !hovering.current) scheduleHide(HIDE_DELAY);
+  }, [layout, reveal, scheduleHide]);
+
+  const handlePointerEnter = useCallback(() => {
+    hovering.current = true;
+    reveal();
+  }, [reveal]);
+
+  const handlePointerLeave = useCallback(() => {
+    hovering.current = false;
+    if (!dragRef.current) scheduleHide(HIDE_DELAY);
+  }, [scheduleHide]);
+
+  const handleThumbPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      const el = scrollRef.current;
+      if (!el) return;
+      e.preventDefault();
+      e.stopPropagation();
+      dragRef.current = { startY: e.clientY, startScroll: el.scrollTop };
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      reveal();
+    },
+    [reveal],
+  );
+
+  const handleThumbPointerMove = useCallback((e: React.PointerEvent) => {
+    const el = scrollRef.current;
+    const drag = dragRef.current;
+    if (!el || !drag) return;
+    const overflow = el.scrollHeight - el.clientHeight;
+    const thumbH = Math.max(MIN_THUMB, (el.clientHeight / el.scrollHeight) * el.clientHeight);
+    const range = el.clientHeight - thumbH;
+    if (range <= 0) return;
+    el.scrollTop = drag.startScroll + ((e.clientY - drag.startY) / range) * overflow;
+  }, []);
+
+  const handleThumbPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragRef.current) return;
+      dragRef.current = null;
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      if (!hovering.current) scheduleHide(HIDE_DELAY);
+    },
+    [scheduleHide],
+  );
+
+  // Recompute on mount, panel swap, and any size/content change.
+  useEffect(() => {
+    const el = scrollRef.current;
+    layout();
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => layout());
+    ro.observe(el);
+    Array.from(el.children).forEach((child) => ro.observe(child));
+    return () => ro.disconnect();
+  }, [panelKey, layout]);
+
+  useEffect(() => () => clearHide(), [clearHide]);
+
+  return {
+    scrollRef,
+    thumbRef,
+    visible,
+    handleScroll,
+    handlePointerEnter,
+    handlePointerLeave,
+    handleThumbPointerDown,
+    handleThumbPointerMove,
+    handleThumbPointerUp,
+  };
 }
 
 // Main component
@@ -890,6 +1045,9 @@ export default function SideNav({
   // Delayed render state: keeps previous content visible during crossfade
   const [showExpanded, setShowExpanded] = useState(expanded);
   const [animating, setAnimating] = useState(false);
+
+  // Custom fading overlay scrollbar for whichever panel is mounted.
+  const scrollbar = useFadingScrollbar(showExpanded);
 
   useEffect(() => {
     setAnimating(true);
@@ -1123,7 +1281,13 @@ export default function SideNav({
 
       {showExpanded ? (
         /* ━━━ EXPANDED STATE ━━━ */
-        <SideNavExpandedPanel isAnimating={animating}>
+        <SideNavExpandedPanel
+          ref={scrollbar.scrollRef}
+          isAnimating={animating}
+          onScroll={scrollbar.handleScroll}
+          onPointerEnter={scrollbar.handlePointerEnter}
+          onPointerLeave={scrollbar.handlePointerLeave}
+        >
           {/* ── Top section (account-type dependent) ── */}
           {renderExpandedTopSection()}
 
@@ -1154,7 +1318,13 @@ export default function SideNav({
         </SideNavExpandedPanel>
       ) : (
         /* ━━━ COLLAPSED STATE ━━━ */
-        <SideNavCollapsedPanel isAnimating={animating}>
+        <SideNavCollapsedPanel
+          ref={scrollbar.scrollRef}
+          isAnimating={animating}
+          onScroll={scrollbar.handleScroll}
+          onPointerEnter={scrollbar.handlePointerEnter}
+          onPointerLeave={scrollbar.handlePointerLeave}
+        >
           {/* Top section (account-type dependent) */}
           {renderCollapsedTopSection()}
 
@@ -1175,6 +1345,16 @@ export default function SideNav({
           </SideNavCollapsedNavList>
         </SideNavCollapsedPanel>
       )}
+
+      {/* ── Custom fading overlay scrollbar thumb (native scrollbar hidden) ── */}
+      <SideNavScrollThumb
+        ref={scrollbar.thumbRef}
+        data-visible={scrollbar.visible}
+        onPointerDown={scrollbar.handleThumbPointerDown}
+        onPointerMove={scrollbar.handleThumbPointerMove}
+        onPointerUp={scrollbar.handleThumbPointerUp}
+        aria-hidden="true"
+      />
     </SideNavRoot>
   );
 }

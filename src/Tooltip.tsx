@@ -22,7 +22,12 @@ export default function Tooltip({ title, placement = 'top', children, ...props }
       arrow
       TransitionComponent={Fade}
       TransitionProps={{ timeout: 0 }}
-      componentsProps={getTooltipSlotStyles(theme)}
+      // MUI v9 dropped the v5 `componentsProps` API in favor of `slotProps`.
+      // Passing the slot styles via `componentsProps` was a silent no-op, so
+      // the tooltip rendered with MUI's default gray styling (illegible in
+      // dark mode). `getTooltipSlotStyles` returns the same { tooltip, arrow }
+      // shape `slotProps` expects.
+      slotProps={getTooltipSlotStyles(theme)}
       {...props}
     >
       {children}

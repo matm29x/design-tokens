@@ -1527,6 +1527,14 @@ export default function DataTable<T = Record<string, unknown>>({
   const headerPy = '10px'; // header padding is constant across all densities
   const cellPx = '12px';
 
+  // Height of the tallest currently-rendered data row, reused as the skeleton
+  // row height so the loading state matches multi-line rows (e.g. a two-line
+  // profile cell) and not just the single-line baseline. Null until the first
+  // real render (e.g. the very first page load), where skeleton rows fall back
+  // to the single-line line-box height.
+  const tbodyRef = useRef<HTMLTableSectionElement>(null);
+  const [measuredRowHeight, setMeasuredRowHeight] = useState<number | null>(null);
+
   //  Drag-reorder 
   const dragColIdRef = useRef<string | null>(null);
   const [dragActiveColId, setDragActiveColId] = useState<string | null>(null);
@@ -1579,6 +1587,29 @@ export default function DataTable<T = Record<string, unknown>>({
   const totalPages = Math.max(1, pagination?.totalPages ?? Math.ceil(totalRows / pageSize));
   const safePage = Math.min(page, totalPages);
   const pageRows = usesServerPagination ? sorted : sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  // Keep the skeleton-row height in step with real rows. Re-measures on data,
+  // density, or width/reflow changes; skips while loading so skeleton rows
+  // never measure themselves, and ignores the empty-state / footer rows by
+  // only sampling the first `pageRows.length` <tr>s (the data rows).
+  useLayoutEffect(() => {
+    if (resolvedLoading || pageRows.length === 0) return;
+    const tbody = tbodyRef.current;
+    if (!tbody || typeof ResizeObserver === 'undefined') return;
+    const measure = (): void => {
+      const dataRows = Array.from(tbody.querySelectorAll<HTMLTableRowElement>(':scope > tr')).slice(
+        0,
+        pageRows.length
+      );
+      if (dataRows.length === 0) return;
+      const max = dataRows.reduce((m, r) => Math.max(m, r.offsetHeight), 0);
+      if (max > 0) setMeasuredRowHeight((prev) => (prev === max ? prev : max));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(tbody);
+    return () => ro.disconnect();
+  }, [resolvedLoading, pageRows, rowDensity]);
   const startRow = totalRows === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const endRow = Math.min(safePage * pageSize, totalRows);
 
@@ -2348,27 +2379,27 @@ export default function DataTable<T = Record<string, unknown>>({
             </thead>
 
             {/*  tbody  */}
-            <tbody>
+            <tbody ref={tbodyRef}>
               {resolvedLoading ? (
                 Array.from({ length: pageSize }).map((_, i) => (
-                  <tr key={i}>
+                  <tr key={i} style={measuredRowHeight != null ? { height: measuredRowHeight } : undefined}>
                     {selectable && (
-                      <td style={{ padding: `${cellPy} ${cellPx}`, position: 'sticky', left: 0, zIndex: 1, backgroundColor: T.rowBase, borderRight: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}` }}>
+                      <td style={{ padding: `${cellPy} ${cellPx}`, ...theme.customTypography.body1.regular, verticalAlign: 'middle', position: 'sticky', left: 0, zIndex: 1, backgroundColor: T.rowBase, borderRight: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}` }}>
                         <SkeletonCheckboxBox />
                       </td>
                     )}
                     {showActionsColumn && actionPosition === 'left' && (
-                      <td style={{ padding: `${cellPy} ${cellPx}`, borderBottom: `1px solid ${T.border}` }}>
+                      <td style={{ padding: `${cellPy} ${cellPx}`, ...theme.customTypography.body1.regular, verticalAlign: 'middle', borderBottom: `1px solid ${T.border}` }}>
                         <SkeletonBar barWidth="60%" />
                       </td>
                     )}
                     {orderedCols.map((col) => (
-                      <td key={col.id} style={{ padding: `${cellPy} ${cellPx}`, borderBottom: `1px solid ${T.border}` }}>
+                      <td key={col.id} style={{ padding: `${cellPy} ${cellPx}`, ...theme.customTypography.body1.regular, verticalAlign: 'middle', borderBottom: `1px solid ${T.border}` }}>
                         <SkeletonBarAnimated />
                       </td>
                     ))}
                     {showActionsColumn && actionPosition === 'right' && (
-                      <td style={{ padding: `${cellPy} ${cellPx}`, borderBottom: `1px solid ${T.border}` }}>
+                      <td style={{ padding: `${cellPy} ${cellPx}`, ...theme.customTypography.body1.regular, verticalAlign: 'middle', borderBottom: `1px solid ${T.border}` }}>
                         <SkeletonBar barWidth="60%" />
                       </td>
                     )}

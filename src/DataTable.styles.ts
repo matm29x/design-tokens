@@ -82,11 +82,14 @@ export const ToolbarSpacer = styled(Box)({
 
 export const ScrollContainerOuter = styled(Box)(({ theme }) => ({
   position: 'relative',
-  // Use `clip` + `overflowClipMargin` so the table's rounded border still
-  // clips inner content, but focus rings on edge-column controls can spill
-  // a few pixels past the frame without being shaved off.
+  // `overflow: clip` (no clip-margin) clips inner content — including the
+  // header and last-row cell backgrounds — to the rounded border box. A
+  // non-zero `overflowClipMargin` inflates the clip region rectangularly,
+  // which drops the corner rounding and lets those square backgrounds bleed
+  // past the rounded corners. Horizontal focus-ring spill is already bounded
+  // by the inner scroll container's `overflowX: auto`, so clipping here costs
+  // nothing visible.
   overflow: 'clip',
-  overflowClipMargin: '8px',
   border: `1px solid ${theme.semantic.divider}`,
   borderRadius: theme.customBorderRadius.lg,
 }));
@@ -210,6 +213,8 @@ export const SortableHeaderButton = styled(Box)<{ component?: React.ElementType 
 //  Loading skeleton 
 
 export const SkeletonCheckboxBox = styled(Box)(({ theme }) => ({
+  display: 'inline-block',
+  verticalAlign: 'middle',
   width: 16,
   height: 16,
   borderRadius: theme.customBorderRadius.sm,
@@ -221,6 +226,11 @@ const SKELETON_BAR_PROPS = ['barWidth'] as const;
 export const SkeletonBar = styled(Box, {
   shouldForwardProp: (prop) => !(SKELETON_BAR_PROPS as readonly string[]).includes(prop as string),
 })<{ barWidth?: string }>(({ theme, barWidth }) => ({
+  // inline-block + middle so the thin bar centers within the cell's text
+  // line box (see skeleton <td> typography), keeping loading-row height in
+  // step with populated rows at every density.
+  display: 'inline-block',
+  verticalAlign: 'middle',
   height: 14,
   borderRadius: '4px',
   backgroundColor: theme.semantic.action.hover,
@@ -230,6 +240,8 @@ export const SkeletonBar = styled(Box, {
 export const SkeletonBarAnimated = styled(Box, {
   shouldForwardProp: (prop) => !(SKELETON_BAR_PROPS as readonly string[]).includes(prop as string),
 })<{ barWidth?: string }>(({ theme, barWidth }) => ({
+  display: 'inline-block',
+  verticalAlign: 'middle',
   height: 14,
   borderRadius: '4px',
   backgroundColor: theme.semantic.action.hover,

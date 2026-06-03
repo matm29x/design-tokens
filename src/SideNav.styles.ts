@@ -70,7 +70,10 @@ export const NavItemLabel = styled(Typography, {
   shouldForwardProp: (prop) => prop !== 'isActive',
 })<{ isActive?: boolean }>(({ theme, isActive }) => ({
   ...(isActive ? theme.customTypography.body1.medium : theme.customTypography.body1.regular),
-  lineHeight: 1,
+  // `lineHeight: 1` gave a 1em line box that `overflow: hidden` (needed for the
+  // ellipsis) then clipped — cutting off descenders on letters like g/p/y.
+  // A taller line box leaves room for descenders while staying single-line.
+  lineHeight: 1.4,
   color: isActive ? theme.semantic.primary.main : theme.semantic.text.primary,
   flex: 1,
   minWidth: 0,
@@ -130,9 +133,20 @@ export const ImpersonationBannerBox = styled(Box)(({ theme }) => ({
   borderRadius: theme.customBorderRadius.xl,
   backgroundColor: theme.colors.red[50],
   border: `1px solid ${theme.semantic.error.main}`,
+  // The whole banner is the exit-impersonation control (not just the icon).
+  cursor: 'pointer',
+  transition: 'background-color 0.15s ease',
+  '&:hover': { backgroundColor: theme.colors.red[100] },
+  '&:focus-visible': {
+    outline: `2px solid ${theme.semantic.error.main}`,
+    outlineOffset: 2,
+  },
   '[data-color-mode="dark"] &': {
     backgroundColor: `color-mix(in srgb, ${theme.colors.red[500]} 10%, transparent)`,
     borderColor: theme.semantic.error.dark,
+  },
+  '[data-color-mode="dark"] &:hover': {
+    backgroundColor: `color-mix(in srgb, ${theme.colors.red[500]} 18%, transparent)`,
   },
 }));
 
@@ -439,6 +453,10 @@ export const SideNavFooterBox = styled(Box)(({ theme }) => ({
   width: '100%',
   flexShrink: 0,
   textAlign: 'center',
+  // Pin the footer (version / current-location row) to the bottom of the
+  // panel when the nav content is shorter than the available height. When
+  // content overflows, the auto margin collapses and the panel scrolls.
+  marginTop: 'auto',
 }));
 
 export const SideNavVersionText = styled(Typography, {
@@ -494,8 +512,14 @@ export const SideNavRoot = styled(Box, {
   backgroundImage: theme.surfaceOverlay.base,
   position: 'relative',
   width: isExpanded ? 320 : 96,
+  // Hug content with a 640px floor, capped at the parent's height so the
+  // SideNav can't grow past the viewport when its content (top section +
+  // long nav list + footer) exceeds the available vertical space. Internal
+  // scroll lives on the panel (see `hoverScrollStyles`). Using `maxHeight`
+  // (not `height: 100%`) lets the root hug short content instead of always
+  // filling the parent.
   minHeight: 640,
-  height: '100%',
+  maxHeight: '100%',
   transition: 'width 0.35s cubic-bezier(0.4,0,0.2,1)',
   overflow: isAnimating ? 'hidden' : 'visible',
   flexShrink: 0,
@@ -517,29 +541,63 @@ export const CollapsedBadgePosition = styled(Box)({
 
 // Internal scroll for the nav panels. With the AppShell hug, SideNavRoot is
 // capped at `maxHeight: 100%`; when its content exceeds that, the panel
-// (top section + nav list + footer) scrolls together inside the root. Hover-
-// only thin scrollbar; the gutter is pulled to the SideNav's right edge via
-// the negative margin / matching padding.
+// (top section + nav list + footer) scrolls together inside the root.
+//
+// The NATIVE scrollbar is fully hidden here and a custom overlay thumb
+// (`SideNavScrollThumb`) is rendered instead. Native scrollbars can't be
+// reliably opacity-faded across browsers — Chrome 121+ lets the global
+// `scrollbar-color` rule (globals.css) win over `::-webkit-scrollbar`
+// customization, and WebKit scrollbar pseudo-elements don't animate — which
+// made show/hide inconsistent and un-faded. `scrollbar-width: none` + the
+// webkit reset neutralize the global rule so nothing native ever paints; the
+// overlay thumb owns the smooth fade in/out. The gutter (`paddingRight`) is
+// kept so the overlay thumb sits clear of the nav content.
 const hoverScrollStyles = {
   overflowY: 'auto' as const,
   overflowX: 'hidden' as const,
   marginRight: -20,
   paddingRight: 20,
-  // Must resolve to `auto` so the webkit pseudo below controls width/color.
-  '&&': { scrollbarColor: 'auto' },
-  '&::-webkit-scrollbar': { width: 8, height: 8 },
-  '&::-webkit-scrollbar-button': { display: 'none', width: 0, height: 0 },
-  '&::-webkit-scrollbar-track': { backgroundColor: 'transparent' },
-  '&::-webkit-scrollbar-thumb': {
-    backgroundColor: 'transparent',
-    borderRadius: 4,
-    transition: 'background-color 200ms ease',
-  },
-  '&:hover::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0, 0, 0, 0.35)' },
-  '[data-color-mode="dark"] &:hover::-webkit-scrollbar-thumb': {
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
-  },
+  scrollbarWidth: 'none' as const,
+  '&&': { scrollbarColor: 'transparent transparent' },
+  '&::-webkit-scrollbar': { width: 0, height: 0, display: 'none' },
 };
+
+// Custom overlay scrollbar thumb. Positioned/sized imperatively from the
+// panel's scroll metrics (see useFadingScrollbar). Opacity fades in/out via
+// the `data-visible` attribute so showing/hiding the scrollbar is a smooth,
+// consistent transition on every browser. Lives as a child of SideNavRoot
+// (position: relative) and sits in the right-edge gutter, on top of the panel.
+export const SideNavScrollThumb = styled(Box)(() => ({
+  position: 'absolute',
+  // 4px from the SideNav's right edge — matches where the native scrollbar sat.
+  right: 4,
+  width: 8,
+  borderRadius: 4,
+  // Match the app-wide native scrollbar color (globals.css `scrollbar-color`:
+  // 0.35 black / 0.7 white) so the SideNav scrollbar reads identically to the
+  // table (and every other) scrollbar.
+  backgroundColor: 'rgba(0, 0, 0, 0.35)',
+  opacity: 0,
+  // Below the collapse toggle (NavToggleButton, zIndex 4) so the scrollbar
+  // never draws over it — the toggle's opaque circle covers the thumb where
+  // they overlap near the top of the track.
+  zIndex: 3,
+  cursor: 'pointer',
+  touchAction: 'none',
+  // Fade-out (base, ~140ms) is snappier than fade-in (visible, ~250ms).
+  transition: 'opacity 140ms ease-in, background-color 150ms ease',
+  '&[data-visible="true"]': {
+    opacity: 1,
+    transition: 'opacity 250ms ease-out, background-color 150ms ease',
+  },
+  '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+  '&:active': { backgroundColor: 'rgba(0, 0, 0, 0.6)' },
+  '[data-color-mode="dark"] &': { backgroundColor: 'rgba(255, 255, 255, 0.7)' },
+  '[data-color-mode="dark"] &:hover': { backgroundColor: 'rgba(255, 255, 255, 0.85)' },
+  '[data-color-mode="dark"] &:active': { backgroundColor: 'rgba(255, 255, 255, 1)' },
+  // Respect reduced-motion: snap instead of fade.
+  '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+}));
 
 export const SideNavExpandedPanel = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'isAnimating',

@@ -64,6 +64,7 @@ import {
   LIToolbar,
   LIViewingDesktopBox,
   LIViewingLink,
+  LIViewingModeSegment,
   LIViewingMobilePill,
   LIViewingPill,
   LIViewingText,
@@ -156,9 +157,12 @@ interface DropdownItemProps {
 }
 
 function getProfileConfig(theme: Theme): Record<string, ProfileConfig> {
+  // Viewing Mode is a cautionary "you're acting as someone else" state, so the
+  // pill is red for every profile type (matches Header v0.8 in the Playground).
+  // Only the link label differs per profile.
   const staffConfig = {
-    badgeBg: theme.colors.teal[100],
-    badgeColor: theme.colors.teal[700],
+    badgeBg: theme.colors.red[100],
+    badgeColor: theme.colors.red[700],
     linkLabel: 'View Staff',
   };
 
@@ -233,20 +237,17 @@ function ViewingModeBadge({ config, href = '#' }: { config: ProfileConfig; href?
   return (
     <>
       <LIViewingDesktopBox sx={{ display: { xs: 'none', md: 'flex' } }}>
-        <LIViewingPill style={{ backgroundColor: config.badgeBg }}>
-          <ViewFilledIcon size={16} color={config.badgeColor} />
-          <LIViewingText component="span" badgeColor={config.badgeColor}>
-            Viewing Mode
-          </LIViewingText>
+        <LIViewingPill>
+          <LIViewingModeSegment>
+            <ViewFilledIcon size={16} color="currentColor" />
+            <LIViewingText component="span">Viewing Mode</LIViewingText>
+          </LIViewingModeSegment>
+          <LIViewingLink href={href}>{config.linkLabel}</LIViewingLink>
         </LIViewingPill>
-        <LIViewingLink href={href}>{config.linkLabel}</LIViewingLink>
       </LIViewingDesktopBox>
-      <LIViewingMobilePill
-        sx={{ display: { xs: 'inline-flex', md: 'none' } }}
-        style={{ backgroundColor: config.badgeBg }}
-      >
-        <ViewFilledIcon size={16} color={config.badgeColor} />
-        <ChevronDownIcon size={16} color={config.badgeColor} />
+      <LIViewingMobilePill sx={{ display: { xs: 'inline-flex', md: 'none' } }}>
+        <ViewFilledIcon size={16} color="currentColor" />
+        <ChevronDownIcon size={16} color="currentColor" />
       </LIViewingMobilePill>
     </>
   );

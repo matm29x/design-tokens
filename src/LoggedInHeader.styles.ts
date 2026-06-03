@@ -13,7 +13,11 @@ import Typography from '@mui/material/Typography';
 
 export const LIAppBar = styled(AppBar)(({ theme }) => ({
   zIndex: 1100,
-  backgroundColor: theme.semantic.background.paper,
+  // Same surface as the SideNav / content card: white in light mode, and in
+  // dark mode the base elevation overlay lightens the slate-900 surface so the
+  // header doesn't read as a flat, darker bar than the rest of the chrome.
+  backgroundColor: theme.semantic.common.white,
+  backgroundImage: theme.surfaceOverlay.base,
   color: theme.semantic.text.primary,
   borderBottom: `1px solid ${theme.semantic.divider}`,
 }));
@@ -81,22 +85,53 @@ export const LIRightBox = styled(Box)(({ theme }) => ({
   gap: theme.customSpacing[3],
 }));
 
+// Outer container for the joined Viewing Mode pill. The two segments (red
+// "Viewing Mode" + gray staff link) butt together inside a single rounded
+// pill; `overflow: hidden` clips each segment's corners to the pill radius.
 export const LIViewingPill = styled(Box)(({ theme }) => ({
   display: 'inline-flex',
-  alignItems: 'center',
-  gap: theme.customSpacing[1],
-  padding: `${theme.customSpacing[1]} ${theme.customSpacing[2]}`,
+  alignItems: 'stretch',
   borderRadius: theme.customBorderRadius.full,
+  overflow: 'hidden',
   whiteSpace: 'nowrap',
 }));
 
+// Left (red) segment: eye icon + "Viewing Mode". Light mode = solid red-100 /
+// red-700; dark mode = duotone red — a translucent red tint over the dark
+// surface with a brighter red foreground (icon + text inherit `currentColor`).
+export const LIViewingModeSegment = styled(Box)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: theme.customSpacing[1],
+  padding: `${theme.customSpacing[2]} ${theme.customSpacing[3]}`,
+  // Light: original solid red-100 / red-700. Dark: duotone red matching the
+  // SideNav current-location indicator.
+  backgroundColor: theme.colors.red[100],
+  color: theme.colors.red[700],
+  '[data-color-mode="dark"] &': {
+    backgroundColor: 'rgba(127, 29, 29, 0.20)', // red[900] @ 20%
+    color: theme.colors.red[300],
+  },
+}));
+
+// Right (gray) segment: the staff/users link, fused to the red segment.
 export const LIViewingLink = styled('a')(({ theme }) => ({
-  fontSize: 16,
-  fontWeight: theme.fontWeights.regular,
-  color: theme.semantic.text.primary,
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: `${theme.customSpacing[2]} ${theme.customSpacing[3]}`,
+  backgroundColor: theme.semantic.action.hover,
+  color: theme.semantic.text.secondary,
+  fontSize: 14,
+  fontWeight: theme.fontWeights.medium,
+  lineHeight: 1,
   textDecoration: 'none',
   whiteSpace: 'nowrap',
-  '&:hover': { textDecoration: 'underline' },
+  cursor: 'pointer',
+  transition: 'background-color 0.15s ease, color 0.15s ease',
+  '&:hover': {
+    backgroundColor: theme.semantic.action.selected,
+    color: theme.semantic.text.primary,
+  },
 }));
 
 export const LIViewingMobilePill = styled(Box)(({ theme }) => ({
@@ -106,6 +141,12 @@ export const LIViewingMobilePill = styled(Box)(({ theme }) => ({
   padding: `${theme.customSpacing[1]} ${theme.customSpacing[2]}`,
   borderRadius: theme.customBorderRadius.full,
   cursor: 'pointer',
+  backgroundColor: theme.colors.red[100],
+  color: theme.colors.red[700],
+  '[data-color-mode="dark"] &': {
+    backgroundColor: 'rgba(127, 29, 29, 0.20)', // red[900] @ 20%
+    color: theme.colors.red[300],
+  },
 }));
 
 export const LIViewingDesktopBox = styled(Box)(({ theme }) => ({
@@ -113,12 +154,11 @@ export const LIViewingDesktopBox = styled(Box)(({ theme }) => ({
   gap: theme.customSpacing[2],
 }));
 
-export const LIViewingText = styled(Box, {
-  shouldForwardProp: (prop) => prop !== 'badgeColor',
-})<{ badgeColor?: string } & { component?: React.ElementType }>(({ theme, badgeColor }) => ({
+export const LIViewingText = styled(Box)<{ component?: React.ElementType }>(({ theme }) => ({
   fontSize: 14,
   fontWeight: theme.fontWeights.semibold,
-  color: badgeColor,
+  // Inherits the segment's color (duotone red, light/dark-aware).
+  color: 'inherit',
   whiteSpace: 'nowrap',
   lineHeight: 1,
 }));
